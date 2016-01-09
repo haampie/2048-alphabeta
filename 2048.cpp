@@ -12,7 +12,7 @@ int main()
 {
   initTables();
   Board board;
-  Minimax minimax(7);
+  Minimax minimax(8);
 
   board = board.insert(2, 0).insert(1, 0);
   std::cout << board;

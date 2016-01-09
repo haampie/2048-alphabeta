@@ -3,9 +3,7 @@
 #include <limits>
 #include <string>
 
-float Minimax::search(Board board, size_t depth,
-                      float alpha, float beta,
-                      bool maximizing)
+float Minimax::search(Board board, size_t depth, float alpha, float beta, bool maximizing)
 {
   ++d_visited;
   auto movelist = generator.viable(board, maximizing);

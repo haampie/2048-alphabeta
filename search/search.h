@@ -21,9 +21,7 @@ class Minimax
   size_t d_visited;
   bool d_maximizing;
   Move *d_bestMove;
-  float search(Board board, size_t depth,
-               float alpha, float beta,
-               bool maximizing);
+  float search(Board board, size_t depth, float alpha, float beta, bool maximizing);
 public:
   Minimax(size_t depth);
   SearchResult think(Board &board, bool maximizing);
