@@ -6,17 +6,19 @@
 
 struct SearchResult
 {
-  SearchResult(Move *best, float bestScore)
-    : bestMove(best), score(bestScore)
+  SearchResult(Move *best, float bestScore, size_t nodes)
+    : bestMove(best), score(bestScore), visited(nodes)
   {}
 
   Move *bestMove;
   float score;
+  size_t visited;
 };
 
 class Minimax
 {
   size_t d_depth;
+  size_t d_visited;
   bool d_maximizing;
   Move *d_bestMove;
   float search(Board board, size_t depth,
