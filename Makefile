@@ -1,7 +1,7 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -pthread -Wall
+CXXFLAGS = -std=c++14 -Wall
 LINKER = $(CXX)
-LDFLAGS = -pthread
+LDFLAGS =
 
 TARGET = ./bin/2048
 SOURCES = 2048.cc $(wildcard **/*.cc)

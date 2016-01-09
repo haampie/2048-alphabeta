@@ -14,5 +14,5 @@ std::vector<Move*> MoveGenerator::viable(Board &board, bool maximizing) const
   }
 
   // Insert move
-  return std::vector<Move*>(d_inserts.begin(), d_inserts.begin() + board.empty());
+  return std::vector<Move*>(d_inserts.begin(), d_inserts.begin() + 2 * board.empty());
 }

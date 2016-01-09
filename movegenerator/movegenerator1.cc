@@ -9,5 +9,8 @@ MoveGenerator::MoveGenerator()
 
   // Add a 2 tile.
   for (size_t pos = 0; pos != 15; ++pos)
+  {
+    d_inserts.push_back(new Insert(2, pos));
     d_inserts.push_back(new Insert(1, pos));
+  }
 }

@@ -7,6 +7,7 @@
 
 class Board
 {
+  friend std::ostream & operator<<(std::ostream &os, const Board& board);
   board_t d_board;
 public:
   enum Move
@@ -26,7 +27,6 @@ public:
   float gameScore() const;
   float heuristicScore() const;
   size_t empty() const;
-  void print() const;
 };
 
 #endif
