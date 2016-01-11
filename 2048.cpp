@@ -8,24 +8,34 @@
 #include "movegenerator/movegenerator.h"
 
 #include <iostream>
+#include <string>
 
 int main(int argc, char **argv)
 {
+  size_t procs = (argc >= 2 ? std::stoul(argv[1]) : BSPLib::NProcs());
+
   BSPLib::Execute([]()
   {
     initTables();
     Board board;
-    Minimax minimax(8);
+    Minimax minimax(BSPLib::ProcId(), BSPLib::NProcs());
 
     board = board.insert(2, 0).insert(1, 0);
     std::cout << board;
 
     for (size_t ply = 0; ply != 3000; ++ply)
     {
-      auto result = minimax.think(board, ply % 2 == 0);
+      auto result = minimax.think(8, board, ply % 2 == 0);
 
-      std::cout << "Move " << ply + 1 << " visited "
-                << result.visited << " nodes\n" << board;
+      for (size_t idx = 0; idx != BSPLib::NProcs(); ++idx)
+      {
+        if (idx == BSPLib::ProcId())
+        {
+          std::cout << "Proc " << idx << " visited "
+                    << result.visited << '\n';
+        }
+        BSPLib::Sync();
+      }
 
       if (not result.bestMove)
       {
@@ -34,9 +44,14 @@ int main(int argc, char **argv)
       }
 
       board = result.bestMove->apply(board);
+
+      if (BSPLib::ProcId() == 0)
+        std::cout << *result.bestMove << '\n' << board;
+
+      BSPLib::Sync();
     }
-    
-  }, BSPLib::NProcs());
+
+  }, procs);
 }
 
 // char key;

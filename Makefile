@@ -1,7 +1,7 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -Wall -I ../BSPLib/bsp/include/
+CXXFLAGS = -g -std=c++14 -Wall -I ../BSPLib/bsp/include/ -pthread
 LINKER = $(CXX)
-LDFLAGS =
+LDFLAGS = -pthread
 
 TARGET = ./bin/2048
 SOURCES = 2048.cc $(wildcard **/*.cc)

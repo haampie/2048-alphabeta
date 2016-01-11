@@ -1,7 +1,8 @@
 #include "search.h"
 
-Minimax::Minimax(size_t depth)
+Minimax::Minimax(size_t processor, size_t num_processors)
 :
-d_depth(depth)
+d_proc(processor),
+d_nprocs(num_processors)
 {
 }

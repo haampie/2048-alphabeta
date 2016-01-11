@@ -18,13 +18,15 @@ struct SearchResult
 class Minimax
 {
   size_t d_depth;
+  size_t d_proc;
+  size_t d_nprocs;
   size_t d_visited;
   bool d_maximizing;
   Move *d_bestMove;
-  float search(Board board, size_t depth, float alpha, float beta, bool maximizing);
+  float search(Board board, size_t depth, float alpha, float beta, bool maximizing, bool PV);
 public:
-  Minimax(size_t depth);
-  SearchResult think(Board &board, bool maximizing);
+  Minimax(size_t processor, size_t num_processors);
+  SearchResult think(size_t depth, Board &board, bool maximizing);
 };
 
 #endif
