@@ -18,91 +18,36 @@ int main(int argc, char **argv)
   {
     initTables();
     Board board;
-    board = board.insert(8, 0)
-            .insert(8, 0)
-            .insert(5, 0)
-            .insert(4, 1)
-            .insert(5, 1)
-            .insert(2, 1)
-            .insert(5, 2)
-            .insert(2, 2)
-            .insert(2, 4)
-            .insert(1, 4)
-            .insert(1, 4)
-            .insert(1, 4);
+    board = board.insert(1, 3)
+            .insert(1, 6)
+            .insert(1, 13);
 
     Minimax minimax(BSPLib::ProcId(), BSPLib::NProcs());
-    std::cout << board;
 
-    for (size_t depth = 3; depth < 11; ++depth)
+
+    if (BSPLib::ProcId() == 0)
+      std::cout << board;
+
+    SearchResult result;
+
+    size_t visitedNodes = 0;
+
+    for (size_t depth = 1; depth < 9; ++depth)
     {
-      std::cout << "\n\n-- Searching at depth " << depth << "--\n";
-      auto result = minimax.think(depth, board, true);
+      if (BSPLib::ProcId() == 0)
+        std::cout << "\n\n-- Searching at depth " << depth << "\n";
 
-      for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
-        std::cout << **it << '\n';
+      result = minimax.think(depth, board, result.bestMove, true);
+      visitedNodes += result.visited;
 
+      if (BSPLib::ProcId() == 0)
+        for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
+          std::cout << **it << '\n';
+
+      BSPLib::Sync();
     }
 
-    // for (size_t ply = 0; ply != 3000; ++ply)
-    // {
-    //   auto result = minimax.think(8, board, ply % 2 == 0);
-
-    //   for (size_t idx = 0; idx != BSPLib::NProcs(); ++idx)
-    //   {
-    //     if (idx == BSPLib::ProcId())
-    //     {
-    //       std::cout << "Proc " << idx << " visited "
-    //                 << result.visited << '\n';
-    //     }
-    //     BSPLib::Sync();
-    //   }
-
-    //   if (not result.bestMove)
-    //   {
-    //     std::cout << "Game over...\n";
-    //     break;
-    //   }
-
-    //   board = result.bestMove->apply(board);
-
-    //   if (BSPLib::ProcId() == 0)
-    //     std::cout << *result.bestMove << '\n' << board;
-
-    //   BSPLib::Sync();
-    // }
-
+    if (BSPLib::ProcId() == 0)
+      std::cout << "VISITED: " << visitedNodes << '\n';
   }, procs);
 }
-
-// char key;
-// while (std::cin >> key)
-// {
-//   switch (key)
-//   {
-//   case 'a':
-//     board = Slide(Slide::LEFT).apply(board);
-//     break;
-//   case 's':
-//     board = Slide(Slide::BOTTOM).apply(board);
-//     break;
-//   case 'd':
-//     board = Slide(Slide::RIGHT).apply(board);
-//     break;
-//   case 'w':
-//     board = Slide(Slide::TOP).apply(board);
-//     break;
-//   case 'q':
-//     return 1;
-//   }
-
-//   auto result = minimax.think(board, false);
-//   if (not result.bestMove)
-//   {
-//     std::cout << "Game over...\n";
-//     break;
-//   }
-//   board = result.bestMove->apply(board);
-//   std::cout << "Visited " << result.visited << " nodes\n"
-//             << board;
-// }
