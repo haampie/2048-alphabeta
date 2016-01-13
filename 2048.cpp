@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     size_t visitedNodes = 0;
 
-    for (size_t depth = 1; depth < 9; ++depth)
+    for (size_t depth = 5; depth < 6; ++depth)
     {
       if (BSPLib::ProcId() == 0)
         std::cout << "\n\n-- Searching at depth " << depth << "\n";
@@ -40,9 +40,16 @@ int main(int argc, char **argv)
       result = minimax.think(depth, board, result.bestMove, true);
       visitedNodes += result.visited;
 
-      if (BSPLib::ProcId() == 0)
-        for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
-          std::cout << **it << '\n';
+      for (size_t proc = 0; proc != BSPLib::NProcs(); ++proc)
+      {
+        if (BSPLib::ProcId() == proc)
+          for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
+            std::cout << **it << '\n';
+
+        std::cout << '\n';
+
+        BSPLib::Sync();
+      }
 
       BSPLib::Sync();
     }

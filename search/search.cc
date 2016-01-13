@@ -19,35 +19,41 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
 
   // Go over the moves
   float best = -1000000000;
-  Move *bestMove = nullptr;
 
   // Principal variation
   if (PV)
   {
-    // PVSplit: this is the PV-move
-    std::vector<float> scores(movelist.size(), 0.0);
+    std::vector<float> scores(d_nprocs + 1, -1000000000);
     BSPLib::PushContainer(scores);
     BSPLib::Sync();
 
+    size_t bestMove = 0;
+
+    // Search the PV sequentially
     scores[0] = -search(movelist[0]->apply(board), depth - 1, -beta, -alpha, not maximizing, true);
     alpha = scores[0];
 
-    // Go over the elder brothers
-    for (size_t idx = d_proc + 1, nmoves = movelist.size(); idx < nmoves; idx += d_nprocs)
+    // Search the elder brothers in parallel
+    for (size_t idx = 0, nmoves = movelist.size(); d_proc + 1 + idx * d_nprocs < nmoves; idx += d_nprocs)
     {
-      scores[idx] = -search(movelist[idx]->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
+      Move const * const move = d_proc + 1 + idx * d_nprocs;
+      scores[idx] = -search(movelist[moveIndex]->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
 
-      for (size_t proc = 0; proc != d_nprocs; ++proc)
-        if (proc != d_proc)
-          BSPLib::PutIterator(proc, scores.begin(), idx, 1);
+      // Store the current best move (can be removed...)
+      bestMove = movelist[idx];
+
+      // Copy the best move sequence
+      if (depth > 1)
+      {
+        auto it = d_bestMoves[depth - 2].begin();
+        std::copy(it, it + depth - 1, d_bestMoves[depth - 1].begin());
+      }
+      d_bestMoves[depth - 1][depth - 1] = movelist[idx];
+
+      // for (size_t proc = 0; proc != d_nprocs; ++proc)
+      //   if (proc != d_proc)
+      //     BSPLib::PutIterator(proc, scores.begin(), idx, 1);
     }
-
-    // for(size_t idx = 0; idx != d_nprocs; ++idx)
-    // {
-    //   if(idx == d_proc)
-    //     std::cout << idx << ": " << d_visited << '\n';
-    //   BSPLib::Sync();
-    // }
 
     BSPLib::Sync();
 
@@ -58,17 +64,6 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
       {
         // Set the new best move value
         best = scores[idx];
-
-        // Store the current best move (can be removed...)
-        bestMove = movelist[idx];
-
-        // Copy the best move sequence
-        if (depth > 1)
-        {
-          auto it = d_bestMoves[depth - 2].begin();
-          std::copy(it, it + depth - 1, d_bestMoves[depth - 1].begin());
-        }
-        d_bestMoves[depth - 1][depth - 1] = movelist[idx];
       }
     }
 
@@ -84,7 +79,7 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
       {
         // Set the new best move value
         best = score;
-        
+
         // Copy the best move sequence
         if (depth > 1)
         {
@@ -101,9 +96,6 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
         break;
     }
   }
-
-  if (depth == d_depth)
-    d_bestMove = bestMove;
 
   return best;
 }
