@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -std=c++14 -Wall -I ../BSPLib/bsp/include/ -pthread
+CXXFLAGS = -O3 -std=c++14 -Wall -I ../BSPLib/bsp/include/ -pthread
 LINKER = $(CXX)
 LDFLAGS = -pthread
 
