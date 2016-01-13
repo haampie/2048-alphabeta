@@ -4,6 +4,7 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 float Minimax::search(Board board, size_t depth, float alpha, float beta, bool maximizing, bool PV)
 {
@@ -53,8 +54,19 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
     {
       if (scores[idx] > best)
       {
-        bestMove = movelist[idx];
+        // Set the new best move value
         best = scores[idx];
+
+        // Store the current best move (can be removed...)
+        bestMove = movelist[idx];
+
+        // Copy the best move sequence
+        if (depth > 1)
+        {
+          auto it = d_bestMoves[depth - 2].begin();
+          std::copy(it, it + depth - 1, d_bestMoves[depth - 1].begin());
+        }
+        d_bestMoves[depth - 1][depth - 1] = movelist[idx];
       }
     }
 
@@ -67,7 +79,18 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
       float score = -search(move->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
 
       if (score > best)
+      {
+        // Set the new best move value
         best = score;
+        
+        // Copy the best move sequence
+        if (depth > 1)
+        {
+          auto it = d_bestMoves[depth - 2].begin();
+          std::copy(it, it + depth - 1, d_bestMoves[depth - 1].begin());
+        }
+        d_bestMoves[depth - 1][depth - 1] = move;
+      }
 
       if (score > alpha)
         alpha = score;

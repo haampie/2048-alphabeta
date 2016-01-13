@@ -3,14 +3,15 @@
 
 #include "../board/board.h"
 #include "../move/move.h"
+#include <vector>
 
 struct SearchResult
 {
-  SearchResult(Move *best, float bestScore, size_t nodes)
+  SearchResult(std::vector<Move*> &best, float bestScore, size_t nodes)
     : bestMove(best), score(bestScore), visited(nodes)
   {}
 
-  Move *bestMove;
+  std::vector<Move*> bestMove;
   float score;
   size_t visited;
 };
@@ -21,6 +22,7 @@ class Minimax
   size_t d_proc;
   size_t d_nprocs;
   size_t d_visited;
+  std::vector<std::vector<Move*>> d_bestMoves;
   bool d_maximizing;
   Move *d_bestMove;
   float search(Board board, size_t depth, float alpha, float beta, bool maximizing, bool PV);

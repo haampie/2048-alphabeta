@@ -18,38 +18,59 @@ int main(int argc, char **argv)
   {
     initTables();
     Board board;
-    Minimax minimax(BSPLib::ProcId(), BSPLib::NProcs());
+    board = board.insert(8, 0)
+            .insert(8, 0)
+            .insert(5, 0)
+            .insert(4, 1)
+            .insert(5, 1)
+            .insert(2, 1)
+            .insert(5, 2)
+            .insert(2, 2)
+            .insert(2, 4)
+            .insert(1, 4)
+            .insert(1, 4)
+            .insert(1, 4);
 
-    board = board.insert(2, 0).insert(1, 0);
+    Minimax minimax(BSPLib::ProcId(), BSPLib::NProcs());
     std::cout << board;
 
-    for (size_t ply = 0; ply != 3000; ++ply)
+    for (size_t depth = 3; depth < 11; ++depth)
     {
-      auto result = minimax.think(8, board, ply % 2 == 0);
+      std::cout << "\n\n-- Searching at depth " << depth << "--\n";
+      auto result = minimax.think(depth, board, true);
 
-      for (size_t idx = 0; idx != BSPLib::NProcs(); ++idx)
-      {
-        if (idx == BSPLib::ProcId())
-        {
-          std::cout << "Proc " << idx << " visited "
-                    << result.visited << '\n';
-        }
-        BSPLib::Sync();
-      }
+      for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
+        std::cout << **it << '\n';
 
-      if (not result.bestMove)
-      {
-        std::cout << "Game over...\n";
-        break;
-      }
-
-      board = result.bestMove->apply(board);
-
-      if (BSPLib::ProcId() == 0)
-        std::cout << *result.bestMove << '\n' << board;
-
-      BSPLib::Sync();
     }
+
+    // for (size_t ply = 0; ply != 3000; ++ply)
+    // {
+    //   auto result = minimax.think(8, board, ply % 2 == 0);
+
+    //   for (size_t idx = 0; idx != BSPLib::NProcs(); ++idx)
+    //   {
+    //     if (idx == BSPLib::ProcId())
+    //     {
+    //       std::cout << "Proc " << idx << " visited "
+    //                 << result.visited << '\n';
+    //     }
+    //     BSPLib::Sync();
+    //   }
+
+    //   if (not result.bestMove)
+    //   {
+    //     std::cout << "Game over...\n";
+    //     break;
+    //   }
+
+    //   board = result.bestMove->apply(board);
+
+    //   if (BSPLib::ProcId() == 0)
+    //     std::cout << *result.bestMove << '\n' << board;
+
+    //   BSPLib::Sync();
+    // }
 
   }, procs);
 }
