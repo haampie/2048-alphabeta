@@ -10,7 +10,7 @@ class MoveGenerator
   std::vector<Move*> d_inserts;
 
 public:
-  std::vector<Move*> viable(Board &board, bool maximizing) const;
+  std::vector<Move*> viable(Board const &board, bool maximizing, Move *prefer) const;
   MoveGenerator();
   ~MoveGenerator();
 };

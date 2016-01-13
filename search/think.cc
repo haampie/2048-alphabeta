@@ -2,16 +2,17 @@
 #include "../movegenerator/movegenerator.h"
 #include <limits>
 
-SearchResult Minimax::think(size_t depth, Board &board, bool maximizing)
+SearchResult Minimax::think(size_t depth, Board &board, std::vector<Move*> const &pv, bool maximizing)
 {
   d_depth = depth;
   d_visited = 0;
+  d_pv = pv;
 
-  std::vector<Move *> nullmove;
+  std::vector<Move*> nullmove;
 
   // Check if there is at least one move available
-  if (generator.viable(board, maximizing).size() == 0)
-    return SearchResult(nullmove, 0, d_visited);
+  if (generator.viable(board, maximizing, nullptr).size() == 0)
+    return SearchResult();
 
   // Initialize the best move sequence tables
   d_bestMoves.resize(depth);

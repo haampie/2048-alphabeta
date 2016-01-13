@@ -9,7 +9,9 @@
 float Minimax::search(Board board, size_t depth, float alpha, float beta, bool maximizing, bool PV)
 {
   ++d_visited;
-  auto movelist = generator.viable(board, maximizing);
+
+  auto movelist = generator.viable(board, maximizing, PV && d_pv.size() > d_depth - depth ? d_pv[d_pv.size() - d_depth + depth - 1] : nullptr);
+  // auto movelist = generator.viable(board, maximizing, nullptr);
 
   // Reached final depth
   if (depth == 0 or movelist.size() == 0)
