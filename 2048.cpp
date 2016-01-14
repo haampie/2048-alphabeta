@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
     size_t visitedNodes = 0;
 
-    for (size_t depth = 9; depth < 10; ++depth)
+    for (size_t depth = 1; depth < 9; ++depth)
     {
       if (BSPLib::ProcId() == 0)
         std::cout << "\n\n> DEPTH " << depth << "\n";
@@ -39,17 +39,21 @@ int main(int argc, char **argv)
       result = minimax.think(depth, board, result.bestMove, true);
       visitedNodes += result.visited;
 
-      if (BSPLib::ProcId() == 0)
+      for (size_t proc = 0; proc != BSPLib::NProcs(); ++proc)
       {
-        // Board example = board;
-        for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
+        if (BSPLib::ProcId() == proc)
         {
-          std::cout << *generator[*it] << '\n';
-          // example = generator[*it]->apply(example);
-          // std::cout << example << '\n';
+          // Board example = board;
+          for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
+          {
+            std::cout << *generator[*it] << '\n';
+            // example = generator[*it]->apply(example);
+            // std::cout << example << '\n';
+          }
+          std::cout << "\n#nodes: " << result.visited << "\n";
+          std::cout << std::fixed << "Score: " << result.score << "\n\n";
         }
-        std::cout << "\n#nodes: " << result.visited << "\n";
-        std::cout << std::fixed << "Score: " << result.score << "\n\n";
+        BSPLib::Sync();
       }
 
 

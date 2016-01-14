@@ -8,7 +8,7 @@ MoveGenerator::MoveGenerator()
   d_moves.push_back(new Slide(Slide::LEFT));
 
   // Add a 2 tile.
-  for (size_t pos = 0; pos != 15; ++pos)
+  for (size_t pos = 0; pos != 16; ++pos)
   {
     d_moves.push_back(new Insert(2, pos));
     d_moves.push_back(new Insert(1, pos));

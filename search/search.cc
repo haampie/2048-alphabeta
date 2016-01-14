@@ -54,17 +54,18 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
     // Search the younger brothers in parallel
     // Find the local optimum first
 
-    if(d_proc == 0)
-      std::cout << board << '\n';
+    // if(d_proc == 0)
+    // {
+    //   std::cout << "\n\n\n" << board << movelist.size() << " groot\n";
+    // }
 
-    for (size_t proc = 0; proc != d_nprocs; ++proc)
-    {
-      if (d_proc == proc)
-        for (auto move = movelist.begin() + d_proc + 1; move < movelist.end(); move += d_nprocs)
-          std::cout << depth << "] processor " << proc << " checks " << *generator[*move] << "\n";
-
-      BSPLib::Sync();
-    }
+    // for (size_t proc = 0; proc != d_nprocs; ++proc)
+    // {
+    //   if (d_proc == proc)
+    //     for (auto move = movelist.begin() + d_proc + 1; move < movelist.end(); move += d_nprocs)
+    //       std::cout << depth << "] processor " << proc << " checks " << *generator[*move] << "\n";
+    //   BSPLib::Sync();
+    // }
 
     for (auto move = movelist.begin() + d_proc + 1; move < movelist.end(); move += d_nprocs)
     {
@@ -102,6 +103,18 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
     // And let's actually send them.
     BSPLib::Sync();
     BSPLib::PopContainer(localMax);
+
+    for (size_t proc = 0; proc != d_nprocs; ++proc)
+    {
+      if (d_proc == proc)
+      {
+        std::cout << depth << " deep. Processor " << proc << " picks move " << *generator[d_bestMoves[depth - 1][depth - 1]] << "\n";
+        for (size_t idx = 0; idx != localMax.size(); ++idx)
+          std::cout << '(' << idx << ") " << localMax[idx] << '\n';
+        std::cout << "\n\n";
+      }
+      BSPLib::Sync();
+    }
 
     // First assume the PV is the global maximum and then
     // try to falsify it. If it cannot be falsified, then
