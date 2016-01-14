@@ -3,8 +3,8 @@ CXXFLAGS = -O3 -std=c++14 -Wall -I ../BSPLib/bsp/include/ -pthread
 LINKER = $(CXX)
 LDFLAGS = -pthread
 
-TARGET = ./bin/speedup-benchmark
-SOURCES = speedup-benchmark.cc $(wildcard **/*.cc)
+TARGET = ./bin/play-against-pc
+SOURCES = play-against-pc.cc $(wildcard **/*.cc)
 OBJECTS = $(SOURCES:.cc=.o)
 
 DEPS = $(OBJECTS:.o=.d)

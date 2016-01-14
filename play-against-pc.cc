@@ -26,24 +26,58 @@ int main(int argc, char **argv)
     Board board;
     board = board.insert(4, 0).insert(3, 0).insert(2, 1);
 
+    if (ProcId == 0)
+      std::cout << board;
+
     Minimax minimax(ProcId, NProcs);
     SearchResult result;
 
-    for (size_t ply = 0; ply != 1000; ++ply)
+    while (true)
     {
-      // Iterative deepening.
-      for (size_t depth = 1; depth < maxDepth; ++depth)
-        result = minimax.think(depth, board, result.bestMove, ply % 2 == 0);
-
-      if (result.bestMove.size() == 0)
+      board_t copy = board;
+      BSPLib::Push(copy);
+      BSPLib::Sync();
+      if (ProcId == 0)
       {
-        if (ProcId == 0)
-          std::cout << "Ply: " << ply << std::endl << board;
-        break;
+        char move;
+        std::cin >> move;
+        switch (move)
+        {
+        case 'w':
+          copy = Slide(Slide::TOP).apply(copy);
+          break;
+        case 'a':
+          copy = Slide(Slide::LEFT).apply(copy);
+          break;
+        case 's':
+          copy = Slide(Slide::BOTTOM).apply(copy);
+          break;
+        case 'd':
+          copy = Slide(Slide::RIGHT).apply(copy);
+          break;
+        }
+
+        for (size_t proc = 1; proc != NProcs; ++proc)
+          BSPLib::Put(proc, copy);
       }
 
+      BSPLib::Sync();
+      BSPLib::Pop(copy);
+
+      board = Board(copy);
+
+      if (ProcId == 0)
+        std::cout << board << std::endl;
+
+      // Iterative deepening.
+      for (size_t depth = 1; depth < maxDepth; ++depth)
+        result = minimax.think(depth, board, result.bestMove, false);
+
+      if (result.bestMove.size() == 0)
+        break;
+
       board = generator[*result.bestMove.rbegin()]->apply(board);
-      
+
       if (ProcId == 0)
         std::cout << board;
 
