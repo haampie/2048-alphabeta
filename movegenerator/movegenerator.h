@@ -6,14 +6,21 @@
 
 class MoveGenerator
 {
-  std::vector<Move*> d_slides;
-  std::vector<Move*> d_inserts;
+  // This is to quickly initialize the insertion moves
+  std::vector<size_t> d_insertsCopyMachine; 
+  std::vector<Move*> d_moves;
 
 public:
-  std::vector<Move*> viable(Board const &board, bool maximizing, Move *prefer) const;
+  Move *operator[](int i) const;
+  std::vector<size_t> viable(Board const &board, bool maximizing, size_t prefers) const;
   MoveGenerator();
   ~MoveGenerator();
 };
+
+inline Move *MoveGenerator::operator[](int i) const
+{
+  return d_moves[i];
+}
 
 // For now, make the generator global.
 extern MoveGenerator generator;

@@ -10,70 +10,128 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
 {
   ++d_visited;
 
-  auto movelist = generator.viable(board, maximizing, PV && d_pv.size() > d_depth - depth ? d_pv[d_pv.size() - d_depth + depth - 1] : nullptr);
+  auto movelist = generator.viable(
+                    board,
+                    maximizing,
+                    PV && d_pv.size() > d_depth - depth
+                    ? d_pv[d_pv.size() - d_depth + depth - 1]
+                    : 100
+                  );
   // auto movelist = generator.viable(board, maximizing, nullptr);
 
   // Reached final depth
   if (depth == 0 or movelist.size() == 0)
     return maximizing ? board.heuristicScore() : -board.heuristicScore();
 
-  // Go over the moves
-  float best = -1000000000;
-
   // Principal variation
   if (PV)
   {
-    std::vector<float> scores(d_nprocs + 1, -1000000000);
-    BSPLib::PushContainer(scores);
+    // localMax[pid] = max value found by processor pid
+    // localMax[d_nprocs] = PV value found by ALL procs
+    std::vector<float> localMax(d_nprocs + 1, -1000000000);
+    BSPLib::PushContainer(localMax);
     BSPLib::Sync();
-
-    size_t bestMove = 0;
 
     // Search the PV sequentially
-    scores[0] = -search(movelist[0]->apply(board), depth - 1, -beta, -alpha, not maximizing, true);
-    alpha = scores[0];
+    localMax[d_proc] = -search(generator[movelist[0]]->apply(board), depth - 1, -beta, -alpha, not maximizing, true);
 
-    // Search the elder brothers in parallel
-    for (size_t idx = 0, nmoves = movelist.size(); d_proc + 1 + idx * d_nprocs < nmoves; idx += d_nprocs)
+    // Store the PV value as the last index which makes
+    // determining the global maximum easy
+    localMax[d_nprocs] = localMax[d_proc];
+
+    // Use the alpha value
+    alpha = localMax[d_proc];
+
+    // Copy the best move sequence since the PV move must
+    // be the best so far as it is first traversed through
+    if (depth > 1)
     {
-      Move const * const move = d_proc + 1 + idx * d_nprocs;
-      scores[idx] = -search(movelist[moveIndex]->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
+      auto it = d_bestMoves[depth - 2].begin();
+      std::copy(it, it + depth - 1, d_bestMoves[depth - 1].begin());
+    }
+    d_bestMoves[depth - 1][depth - 1] = movelist[0];
 
-      // Store the current best move (can be removed...)
-      bestMove = movelist[idx];
+    // Search the younger brothers in parallel
+    // Find the local optimum first
+    for (auto move = movelist.begin() + d_proc + 1; move < movelist.end(); move += d_nprocs)
+    {
+      float score = -search(generator[*move]->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
 
-      // Copy the best move sequence
-      if (depth > 1)
+      if (score > localMax[d_proc])
       {
-        auto it = d_bestMoves[depth - 2].begin();
-        std::copy(it, it + depth - 1, d_bestMoves[depth - 1].begin());
-      }
-      d_bestMoves[depth - 1][depth - 1] = movelist[idx];
+        // Update the best move score found
+        localMax[d_proc] = score;
 
-      // for (size_t proc = 0; proc != d_nprocs; ++proc)
-      //   if (proc != d_proc)
-      //     BSPLib::PutIterator(proc, scores.begin(), idx, 1);
+        // Copy the best move sequence
+        if (depth > 1)
+        {
+          auto it = d_bestMoves[depth - 2].begin();
+          std::copy(it, it + depth - 1, d_bestMoves[depth - 1].begin());
+        }
+        d_bestMoves[depth - 1][depth - 1] = *move;
+      }
+
+      // Update alpha
+      if (score > alpha)
+        alpha = score;
+
+      // No need to check for cut-offs at PV-level
     }
 
+    // If a younger brother is better than the PV,
+    // communicate your best value to all processors;
+    // otherwise let others assume it is -inf
+    if (localMax[d_proc] > localMax[d_nprocs])
+      for (size_t proc = 0; proc != d_nprocs; ++proc)
+        if (proc != d_proc)
+          BSPLib::PutIterator(proc, localMax.begin(), d_proc, 1);
+
+    // And let's actually send them.
     BSPLib::Sync();
+    BSPLib::PopContainer(localMax);
 
-    // Find the global best (should be done by going through local best scores)
-    for (size_t idx = 0; idx != movelist.size(); ++idx)
+    // First assume the PV is the global maximum and then
+    // try to falsify it. If it cannot be falsified, then
+    // there is no need to communicate the optimal move
+    // sequence
+    float globalMax = localMax[d_nprocs];
+    size_t bestProc = d_nprocs;
+
+    // Find the global best
+    for (size_t proc = 0; proc != d_nprocs; ++proc)
     {
-      if (scores[idx] > best)
+      if (localMax[proc] > globalMax)
       {
-        // Set the new best move value
-        best = scores[idx];
+        globalMax = localMax[proc];
+        bestProc = proc;
       }
     }
 
-    BSPLib::PopContainer(scores);
+    // If global max is found on another processor, sync
+    // the optimal sequence...
+    if (bestProc != d_nprocs)
+    {
+      BSPLib::PushContainer(d_bestMoves[depth - 1]);
+      BSPLib::Sync();
+
+      // Broadcast if you have the best sequence
+      if (bestProc == d_proc)
+        for (size_t proc = 0; proc != d_nprocs; ++proc)
+          if (proc != d_proc)
+            BSPLib::PutContainer(proc, d_bestMoves[depth - 1]);
+
+      BSPLib::Sync();
+      BSPLib::PopContainer(d_bestMoves[depth - 1]);
+    }
+
+    return globalMax;
   }
   else // Not on the PV: search on one processor
   {
+    float best = -1000000000;
     for (auto &move : movelist)
     {
-      float score = -search(move->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
+      float score = -search(generator[move]->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
 
       if (score > best)
       {
@@ -95,7 +153,9 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
       if (beta <= alpha)
         break;
     }
+    return best;
   }
 
-  return best;
+  // To prevent a compiler warning...
+  return 0.0;
 }

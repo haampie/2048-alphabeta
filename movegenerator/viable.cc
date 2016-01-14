@@ -1,18 +1,19 @@
 #include "movegenerator.h"
 #include <algorithm>
 
-std::vector<Move*> MoveGenerator::viable(Board const &board, bool maximizing, Move *prefer) const
+std::vector<size_t> MoveGenerator::viable(Board const &board, bool maximizing, size_t prefer) const
 {
   // Slide move
   if (maximizing)
   {
-    std::vector<Move*> list;
-    for (auto &move : d_slides)
-      if (static_cast<board_t>(board) != move->apply(board))
-        list.push_back(move);
+    std::vector<size_t> list;
+    list.reserve(4);
+    for (size_t idx = 0; idx != 4; ++idx)
+      if (static_cast<board_t>(board) != d_moves[idx]->apply(board))
+        list.push_back(idx);
 
     // Not on the PV, so don't order moves
-    if (not prefer)
+    if (prefer == 100)
       return list;
 
     auto it = std::find(list.begin(), list.end(), prefer);
@@ -26,10 +27,13 @@ std::vector<Move*> MoveGenerator::viable(Board const &board, bool maximizing, Mo
     return list;
   }
 
-  // Insert move
-  std::vector<Move*> list(d_inserts.begin(), d_inserts.begin() + 2 * board.empty());
+  // Insert move (skip 4 inserts)
+  // numbered as 4, 5, 6, ..., 4 + 2 * board.empty();
+  auto begin = d_insertsCopyMachine.begin();
+  std::vector<size_t> list(begin, begin + 2 * board.empty());
+
   // Not on the PV, so don't order moves
-  if (not prefer)
+  if (prefer == 100)
     return list;
 
   auto it = std::find(list.begin(), list.end(), prefer);

@@ -2,9 +2,6 @@
 
 MoveGenerator::~MoveGenerator()
 {
-  for (auto &move : d_slides)
-    delete move;
-
-  for (auto &move : d_inserts)
+  for (auto &move : d_moves)
     delete move;
 }

@@ -8,6 +8,7 @@
 #include "movegenerator/movegenerator.h"
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 
 int main(int argc, char **argv)
@@ -28,14 +29,16 @@ int main(int argc, char **argv)
     if (BSPLib::ProcId() == 0)
       std::cout << board;
 
+    BSPLib::Sync();
+
     SearchResult result;
 
     size_t visitedNodes = 0;
 
-    for (size_t depth = 5; depth < 6; ++depth)
+    for (size_t depth = 1; depth < 9; ++depth)
     {
       if (BSPLib::ProcId() == 0)
-        std::cout << "\n\n-- Searching at depth " << depth << "\n";
+        std::cout << "\n\n> DEPTH " << depth << "\n";
 
       result = minimax.think(depth, board, result.bestMove, true);
       visitedNodes += result.visited;
@@ -43,10 +46,19 @@ int main(int argc, char **argv)
       for (size_t proc = 0; proc != BSPLib::NProcs(); ++proc)
       {
         if (BSPLib::ProcId() == proc)
+        {
+          std::cout << "-- processor " << proc << " --\n";
+          // Board example = board;
           for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
-            std::cout << **it << '\n';
+          {
+            std::cout << *generator[*it] << '\n';
+            // example = generator[*it]->apply(example);
+            // std::cout << example << '\n';
+          }
+          std::cout << "\n#nodes: " << result.visited << "\n";
+          std::cout << std::fixed << "Score: " << result.score << "\n\n";
+        }
 
-        std::cout << '\n';
 
         BSPLib::Sync();
       }
@@ -55,6 +67,6 @@ int main(int argc, char **argv)
     }
 
     if (BSPLib::ProcId() == 0)
-      std::cout << "VISITED: " << visitedNodes << '\n';
+      std::cout << "TOTAL VISITED: " << visitedNodes << '\n';
   }, procs);
 }
