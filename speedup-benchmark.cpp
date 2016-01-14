@@ -19,23 +19,25 @@ int main(int argc, char **argv)
   {
     initTables();
 
-    size_t const maxDepth = 10;
+    size_t maxDepth = 11;
     size_t const NProcs = BSPLib::NProcs();
     size_t const ProcId = BSPLib::ProcId();
 
     Board board;
-    board = board.insert(4, 0).insert(3, 0).insert(2, 1);
+    board = board.insert(2, 0).insert(1, 7);
 
     Minimax minimax(ProcId, NProcs);
     SearchResult result;
 
-    for (size_t ply = 0; ply != 1000; ++ply)
+    for (size_t ply = 0; ply != 10000; ++ply)
     {
       // Iterative deepening.
-      for (size_t depth = 1; depth < maxDepth; ++depth)
+      bool maximize = (ply % 2 == 0);
+      maxDepth = maximize ? 6 : 3;
+      for (size_t depth = maxDepth-1; depth < maxDepth; ++depth)
       {
         // std::cout << "depth = " << depth << std::endl;
-        result = minimax.think(depth, board, result.bestMove, ply % 2 == 0);
+        result = minimax.think(depth, board, result.bestMove, maximize);
       }
 
       if (result.bestMove.size() == 0)

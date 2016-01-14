@@ -28,9 +28,9 @@ std::vector<char> MoveGenerator::viable(Board const &board, bool maximizing, cha
   }
 
   // Insert move (skip 4 inserts)
-  // numbered as 4, 5, 6, ..., 4 + 2 * board.empty();
+  // numbered as 4, 5, 6, ..., 4 + board.empty();
   auto begin = d_insertsCopyMachine.begin();
-  std::vector<char> list(begin, begin + 2 * board.empty());
+  std::vector<char> list(begin, begin + board.empty());
 
   // Not on the PV, so don't order moves
   if (prefer == 100)
