@@ -19,12 +19,8 @@ int main(int argc, char **argv)
   {
     initTables();
     Board board;
-    board = board.insert(1, 3)
-            .insert(1, 6)
-            .insert(1, 13);
-
+    board = board.insert(1, 3).insert(1, 6).insert(1, 13);
     Minimax minimax(BSPLib::ProcId(), BSPLib::NProcs());
-
 
     if (BSPLib::ProcId() == 0)
       std::cout << board;
@@ -35,7 +31,7 @@ int main(int argc, char **argv)
 
     size_t visitedNodes = 0;
 
-    for (size_t depth = 1; depth < 9; ++depth)
+    for (size_t depth = 9; depth < 10; ++depth)
     {
       if (BSPLib::ProcId() == 0)
         std::cout << "\n\n> DEPTH " << depth << "\n";
@@ -43,30 +39,32 @@ int main(int argc, char **argv)
       result = minimax.think(depth, board, result.bestMove, true);
       visitedNodes += result.visited;
 
-      for (size_t proc = 0; proc != BSPLib::NProcs(); ++proc)
+      if (BSPLib::ProcId() == 0)
       {
-        if (BSPLib::ProcId() == proc)
+        // Board example = board;
+        for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
         {
-          std::cout << "-- processor " << proc << " --\n";
-          // Board example = board;
-          for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
-          {
-            std::cout << *generator[*it] << '\n';
-            // example = generator[*it]->apply(example);
-            // std::cout << example << '\n';
-          }
-          std::cout << "\n#nodes: " << result.visited << "\n";
-          std::cout << std::fixed << "Score: " << result.score << "\n\n";
+          std::cout << *generator[*it] << '\n';
+          // example = generator[*it]->apply(example);
+          // std::cout << example << '\n';
         }
-
-
-        BSPLib::Sync();
+        std::cout << "\n#nodes: " << result.visited << "\n";
+        std::cout << std::fixed << "Score: " << result.score << "\n\n";
       }
+
+
+      //   BSPLib::Sync();
+      // }
 
       BSPLib::Sync();
     }
 
-    if (BSPLib::ProcId() == 0)
-      std::cout << "TOTAL VISITED: " << visitedNodes << '\n';
+    for (size_t proc = 0; proc != BSPLib::NProcs(); ++proc)
+    {
+      if (BSPLib::ProcId() == proc)
+        std::cout << visitedNodes << '\n';
+
+      BSPLib::Sync();
+    }
   }, procs);
 }

@@ -53,6 +53,19 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
 
     // Search the younger brothers in parallel
     // Find the local optimum first
+
+    if(d_proc == 0)
+      std::cout << board << '\n';
+
+    for (size_t proc = 0; proc != d_nprocs; ++proc)
+    {
+      if (d_proc == proc)
+        for (auto move = movelist.begin() + d_proc + 1; move < movelist.end(); move += d_nprocs)
+          std::cout << depth << "] processor " << proc << " checks " << *generator[*move] << "\n";
+
+      BSPLib::Sync();
+    }
+
     for (auto move = movelist.begin() + d_proc + 1; move < movelist.end(); move += d_nprocs)
     {
       float score = -search(generator[*move]->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
