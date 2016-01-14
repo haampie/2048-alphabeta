@@ -7,12 +7,12 @@
 class MoveGenerator
 {
   // This is to quickly initialize the insertion moves
-  std::vector<size_t> d_insertsCopyMachine; 
+  std::vector<char> d_insertsCopyMachine; 
   std::vector<Move*> d_moves;
 
 public:
   Move *operator[](int i) const;
-  std::vector<size_t> viable(Board const &board, bool maximizing, size_t prefers) const;
+  std::vector<char> viable(Board const &board, bool maximizing, char prefers) const;
   MoveGenerator();
   ~MoveGenerator();
 };

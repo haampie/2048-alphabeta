@@ -2,13 +2,11 @@
 #include "../movegenerator/movegenerator.h"
 #include <limits>
 
-SearchResult Minimax::think(size_t depth, Board &board, std::vector<size_t> const &pv, bool maximizing)
+SearchResult Minimax::think(size_t depth, Board &board, std::vector<char> const &pv, bool maximizing)
 {
   d_depth = depth;
   d_visited = 0;
   d_pv = pv;
-
-  std::vector<Move*> nullmove;
 
   // Check if there is at least one move available
   if (generator.viable(board, maximizing, 100).size() == 0)
