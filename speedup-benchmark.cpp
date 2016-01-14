@@ -33,7 +33,10 @@ int main(int argc, char **argv)
     {
       // Iterative deepening.
       for (size_t depth = 1; depth < maxDepth; ++depth)
+      {
+        // std::cout << "depth = " << depth << std::endl;
         result = minimax.think(depth, board, result.bestMove, ply % 2 == 0);
+      }
 
       if (result.bestMove.size() == 0)
       {

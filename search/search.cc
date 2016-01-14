@@ -35,6 +35,8 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
     // Search the PV sequentially
     localMax[d_proc] = -search(generator[movelist[0]]->apply(board), depth - 1, -beta, -alpha, not maximizing, true);
 
+    // if(depth == d_depth)
+    //   std::cout << *generator[movelist[0]] << ": " << std::fixed << localMax[d_proc] << '\n';
     // Store the PV value as the last index which makes
     // determining the global maximum easy
     localMax[d_nprocs] = localMax[d_proc];
@@ -56,6 +58,9 @@ float Minimax::search(Board board, size_t depth, float alpha, float beta, bool m
     for (auto move = movelist.begin() + d_proc + 1; move < movelist.end(); move += d_nprocs)
     {
       float score = -search(generator[*move]->apply(board), depth - 1, -beta, -alpha, not maximizing, false);
+
+      // if(depth == d_depth)
+      //   std::cout << *generator[*move] << ": " << std::fixed << score << '\n';
 
       if (score > localMax[d_proc])
       {
