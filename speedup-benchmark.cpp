@@ -10,49 +10,57 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <chrono>
+
+using namespace std;
 
 int main(int argc, char **argv)
 {
-  size_t procs = (argc >= 2 ? std::stoul(argv[1]) : BSPLib::NProcs());
+  size_t procs = (argc >= 2 ? stoul(argv[1]) : BSPLib::NProcs());
 
   BSPLib::Execute([]()
   {
     initTables();
 
-    size_t maxDepth = 11;
+    size_t const maxDepth = 11;
     size_t const NProcs = BSPLib::NProcs();
     size_t const ProcId = BSPLib::ProcId();
-
-    Board board;
-    board = board.insert(2, 0).insert(1, 7);
+    chrono::duration<double> total;
 
     Minimax minimax(ProcId, NProcs);
-    SearchResult result;
 
-    for (size_t ply = 0; ply != 10000; ++ply)
+    for (size_t turn = 0; turn < 2; ++turn)
     {
-      // Iterative deepening.
-      bool maximize = (ply % 2 == 0);
-      maxDepth = maximize ? 6 : 3;
-      for (size_t depth = maxDepth-1; depth < maxDepth; ++depth)
+      bool maximize = (turn == 0);
+
+      // Create different boards
+      for (size_t pos1 = 0; pos1 < 16; ++pos1)
       {
-        // std::cout << "depth = " << depth << std::endl;
-        result = minimax.think(depth, board, result.bestMove, maximize);
+        for (size_t pos2 = 0; pos2 < 15; ++pos2)
+        {
+          BSPLib::Sync();
+          Board board;
+          board = board.insert(1, pos1).insert(2, pos2);
+          SearchResult result;
+
+          if (ProcId == 0)
+          {
+            cout << (maximize ? "Maximize\n" : "Minimize\n");
+            cout << board;
+          }
+
+          chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now();
+          for (size_t depth = maxDepth - 1; depth < maxDepth; ++depth)
+          {
+            result = minimax.think(depth, board, result.bestMove, maximize);
+          }
+          chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+          total += chrono::duration_cast<chrono::duration<double>>(end - begin);
+        }
       }
-
-      if (result.bestMove.size() == 0)
-      {
-        if (ProcId == 0)
-          std::cout << "Ply: " << ply << std::endl << board;
-        break;
-      }
-
-      board = generator[*result.bestMove.rbegin()]->apply(board);
-      
-      if (ProcId == 0)
-        std::cout << board;
-
-      BSPLib::Sync();
     }
+
+    if (ProcId == 0)
+      cout << total.count() << endl;
   }, procs);
 }
