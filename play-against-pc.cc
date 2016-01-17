@@ -7,7 +7,8 @@
 #include "heuristics/tables.h"
 #include "movegenerator/movegenerator.h"
 
-#include <iostream>
+#include <chrono>
+#include <iomanip>
 #include <iomanip>
 #include <string>
 
@@ -19,7 +20,7 @@ int main(int argc, char **argv)
   {
     initTables();
 
-    size_t const maxDepth = 10;
+    size_t const maxDepth = 20;
     size_t const NProcs = BSPLib::NProcs();
     size_t const ProcId = BSPLib::ProcId();
 
@@ -70,8 +71,17 @@ int main(int argc, char **argv)
         std::cout << board << std::endl;
 
       // Iterative deepening.
+      std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
       for (size_t depth = 1; depth < maxDepth; ++depth)
+      {
         result = minimax.think(depth, board, result.bestMove, false);
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+        if (ms.count() > 1000)
+          break;
+      }
 
       if (result.bestMove.size() == 0)
         break;
