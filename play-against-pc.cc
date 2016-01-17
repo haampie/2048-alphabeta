@@ -7,6 +7,7 @@
 #include "heuristics/tables.h"
 #include "movegenerator/movegenerator.h"
 
+#include <cmath>
 #include <chrono>
 #include <iomanip>
 #include <iomanip>
@@ -80,7 +81,13 @@ int main(int argc, char **argv)
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         if (ms.count() > 1000)
+        {
+          if (ProcId == 0)
+            std::cout << "Searched to depth " << depth
+                      << " expected: " << std::fixed 
+                      << std::fabs(result.score) << '\n';
           break;
+        }
       }
 
       if (result.bestMove.size() == 0)
