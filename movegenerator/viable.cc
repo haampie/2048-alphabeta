@@ -1,19 +1,19 @@
 #include "movegenerator.h"
 #include <algorithm>
 
-std::vector<char> MoveGenerator::viable(Board const &board, bool maximizing, char prefer) const
+std::vector<Move*> MoveGenerator::viable(Board const &board, bool maximizing, Move *prefer) const
 {
   // Slide move
   if (maximizing)
   {
-    std::vector<char> list;
+    std::vector<Move*> list;
     list.reserve(4);
-    for (char idx = 0; idx != 4; ++idx)
+    for (size_t idx = 0; idx != 4; ++idx)
       if (static_cast<board_t>(board) != d_moves[idx]->apply(board))
-        list.push_back(idx);
+        list.push_back(d_moves[idx]);
 
     // Not on the PV, so don't order moves
-    if (prefer == 100)
+    if (prefer == nullptr)
       return list;
 
     auto it = std::find(list.begin(), list.end(), prefer);
@@ -28,12 +28,11 @@ std::vector<char> MoveGenerator::viable(Board const &board, bool maximizing, cha
   }
 
   // Insert move (skip 4 inserts)
-  // numbered as 4, 5, 6, ..., 4 + 2 * board.empty();
-  auto begin = d_insertsCopyMachine.begin();
-  std::vector<char> list(begin, begin + 2 * board.empty());
+  auto begin = d_moves.begin() + 4;
+  std::vector<Move*> list(begin, begin + 2 * board.empty());
 
   // Not on the PV, so don't order moves
-  if (prefer == 100)
+  if (prefer == nullptr)
     return list;
 
   auto it = std::find(list.begin(), list.end(), prefer);

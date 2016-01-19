@@ -13,60 +13,35 @@
 
 int main(int argc, char **argv)
 {
-  size_t procs = (argc >= 2 ? std::stoul(argv[1]) : BSPLib::NProcs());
+  size_t maxDepth = (argc >= 2 ? std::stoul(argv[1]) : 9);
+  initTables();
+  Board board;
+  board = board.insert(1, 3).insert(1, 6).insert(1, 13);
 
-  BSPLib::Execute([]()
+  Minimax minimax;
+
+  std::cout << board;
+
+  SearchResult result;
+
+  size_t visitedNodes = 0;
+
+  for (size_t depth = 1; depth < maxDepth; ++depth)
   {
-    initTables();
-    Board board;
-    board = board.insert(1, 3)
-            .insert(1, 6)
-            .insert(1, 13);
+    std::cout << "\n\n> DEPTH " << depth << "\n";
 
-    Minimax minimax(BSPLib::ProcId(), BSPLib::NProcs());
+    result = minimax.think(depth, board, result.bestMove, true);
+    visitedNodes += result.visited;
 
+    // Board example = board;
+    for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
+      if (*it != nullptr)
+        std::cout << **it << '\n';
 
-    if (BSPLib::ProcId() == 0)
-      std::cout << board;
+    std::cout << "\n#nodes: " << result.visited << "\n";
+    std::cout << std::fixed << "Score: " << result.score << "\n\n";
 
-    BSPLib::Sync();
+  }
 
-    SearchResult result;
-
-    size_t visitedNodes = 0;
-
-    for (size_t depth = 1; depth < 9; ++depth)
-    {
-      if (BSPLib::ProcId() == 0)
-        std::cout << "\n\n> DEPTH " << depth << "\n";
-
-      result = minimax.think(depth, board, result.bestMove, true);
-      visitedNodes += result.visited;
-
-      for (size_t proc = 0; proc != BSPLib::NProcs(); ++proc)
-      {
-        if (BSPLib::ProcId() == proc)
-        {
-          std::cout << "-- processor " << proc << " --\n";
-          // Board example = board;
-          for (auto it = result.bestMove.rbegin(); it != result.bestMove.rend(); ++it)
-          {
-            std::cout << *generator[*it] << '\n';
-            // example = generator[*it]->apply(example);
-            // std::cout << example << '\n';
-          }
-          std::cout << "\n#nodes: " << result.visited << "\n";
-          std::cout << std::fixed << "Score: " << result.score << "\n\n";
-        }
-
-
-        BSPLib::Sync();
-      }
-
-      BSPLib::Sync();
-    }
-
-    if (BSPLib::ProcId() == 0)
-      std::cout << "TOTAL VISITED: " << visitedNodes << '\n';
-  }, procs);
+  std::cout << "TOTAL VISITED: " << visitedNodes << '\n';
 }
